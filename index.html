@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Balloon Spribe • Provably Fair</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --card: #121a2b;
+      --border: #1e2a44;
+      --text: #e8eefc;
+      --muted: #8b9bb8;
+      --accent: #22c55e;
+      --accent-dark: #16a34a;
+      --danger: #ef4444;
+      --blue: #3b82f6;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 12px;
+      line-height: 1.4;
+      font-size: 14px;
+    }
+    .container { max-width: 480px; margin: 0 auto; }
+    header {
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    header h1 {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+    header p {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(34,197,94,0.15);
+      color: var(--accent);
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-top: 6px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .card h2 {
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+    }
+    label {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-bottom: 3px;
+      font-weight: 500;
+    }
+    input {
+      width: 100%;
+      background: #0d1526;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: var(--text);
+      font-size: 0.82rem;
+      font-family: monospace;
+      margin-bottom: 8px;
+      outline: none;
+    }
+    input:focus { border-color: var(--blue); }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .btns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    button {
+      border: none;
+      border-radius: 9px;
+      padding: 10px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    #verifyBtn {
+      background: var(--accent);
+      color: #04120a;
+    }
+    #verifyBtn:hover { background: var(--accent-dark); }
+    #clearBtn {
+      background: #1e2a44;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    #clearBtn:hover { background: #2a3a5c; color: var(--text); }
+    button:active { transform: scale(0.97); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .result-box {
+      background: #0d1526;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      margin-top: 10px;
+      display: none;
+    }
+    .result-box.show { display: block; }
+    .crash-value {
+      font-size: 1.9rem;
+      font-weight: 800;
+      text-align: center;
+      margin: 4px 0;
+    }
+    .crash-value.ok { color: var(--accent); }
+    .crash-value.fail { color: var(--danger); }
+    .meta {
+      font-size: 0.7rem;
+      color: var(--muted);
+      word-break: break-all;
+      margin-top: 8px;
+    }
+    .meta strong {
+      color: var(--text);
+      display: block;
+      margin-bottom: 1px;
+    }
+    .status {
+      text-align: center;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 6px 8px;
+      border-radius: 6px;
+      margin-top: 8px;
+    }
+    .status.ok { background: rgba(34,197,94,0.12); color: var(--accent); }
+    .status.fail { background: rgba(239,68,68,0.12); color: var(--danger); }
+    .info {
+      font-size: 0.75rem;
+      color: var(--muted);
+      padding: 10px;
+      background: rgba(59,130,246,0.08);
+      border-radius: 8px;
+      border-left: 3px solid var(--blue);
+    }
+    .info code {
+      background: rgba(0,0,0,0.3);
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-size: 0.7rem;
+    }
+    .tabs {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 7px 4px;
+      border-radius: 8px;
+      background: #0d1526;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .tab.active {
+      background: rgba(34,197,94,0.15);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    footer {
+      text-align: center;
+      margin-top: 14px;
+      font-size: 0.68rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎈 Balloon • Provably Fair</h1>
+      <p>Verificador do resultado voador (Spribe)</p>
+      <div class="badge">Client-side • SHA-512</div>
+    </header>
+
+    <div class="card">
+      <div class="tabs">
+        <div class="tab active" data-mode="1">1 Seed<br><small>Balloon</small></div>
+        <div class="tab" data-mode="3">3 Seeds<br><small>Aviator</small></div>
+      </div>
+
+      <h2>🔑 Seeds</h2>
+
+      <label>Server Seed</label>
+      <input id="serverSeed" type="text" placeholder="Cole o Server Seed..." autocomplete="off" spellcheck="false" />
+
+      <div id="clientSeeds1">
+        <label>Client Seed</label>
+        <input id="clientSeed1" type="text" placeholder="Cole o Client Seed..." autocomplete="off" spellcheck="false" />
+      </div>
+
+      <div id="clientSeeds3" style="display:none;">
+        <label>Client Seed 1</label>
+        <input id="cs1" type="text" placeholder="Client Seed 1..." autocomplete="off" spellcheck="false" />
+        <label>Client Seed 2</label>
+        <input id="cs2" type="text" placeholder="Client Seed 2..." autocomplete="off" spellcheck="false" />
+        <label>Client Seed 3</label>
+        <input id="cs3" type="text" placeholder="Client Seed 3..." autocomplete="off" spellcheck="false" />
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Hash SHA-256 (opcional)</label>
+          <input id="expectedHash" type="text" placeholder="Hash do Server Seed..." autocomplete="off" spellcheck="false" />
+        </div>
+        <div>
+          <label>Crash real (opcional)</label>
+          <input id="expectedCrash" type="text" placeholder="Ex: 2.47" autocomplete="off" />
+        </div>
+      </div>
+
+      <div class="btns">
+        <button id="clearBtn">Limpar</button>
+        <button id="verifyBtn">Verificar</button>
+      </div>
+
+      <div class="result-box" id="resultBox">
+        <div style="text-align:center;color:var(--muted);font-size:0.75rem;">Multiplicador calculado</div>
+        <div class="crash-value" id="crashValue">—</div>
+        <div class="status" id="statusMsg"></div>
+        <div class="meta"><strong>SHA-512</strong><span id="sha512Out">—</span></div>
+        <div class="meta"><strong>SHA-256 (Server)</strong><span id="sha256Out">—</span></div>
+        <div class="meta"><strong>h</strong><span id="hValue">—</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="info">
+        <p>1. Abra o histórico da rodada → ícone Provably Fair.</p>
+        <p style="margin-top:5px;">2. Cole Server Seed + Client Seed(s).</p>
+        <p style="margin-top:5px;">3. Clique em <strong>Verificar</strong>.</p>
+        <p style="margin-top:8px;"><code>crash = max(1.00, floor(97/(1−h))/100)</code></p>
+      </div>
+    </div>
+
+    <footer>100% offline • Web Crypto API • Balloon / Aviator</footer>
+  </div>
+
+  <script>
+    let mode = 1;
+
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        mode = parseInt(tab.dataset.mode);
+        document.getElementById('clientSeeds1').style.display = mode === 1 ? 'block' : 'none';
+        document.getElementById('clientSeeds3').style.display = mode === 3 ? 'block' : 'none';
+      });
+    });
+
+    async function sha512(str) {
+      const data = new TextEncoder().encode(str);
+      const hash = await crypto.subtle.digest('SHA-512', data);
+      return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
+    }
+
+    async function sha256(str) {
+      const data = new TextEncoder().encode(str);
+      const hash = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
+    }
+
+    function calculateCrash(hexHash) {
+      const hInt = parseInt(hexHash.substring(0,13), 16);
+      const h = hInt / Math.pow(2,52);
+      if (h >= 1) return 1.00;
+      return Math.max(1.00, Math.floor(97 / (1 - h)) / 100);
+    }
+
+    // Limpar
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      ['serverSeed','clientSeed1','cs1','cs2','cs3','expectedHash','expectedCrash'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('resultBox').classList.remove('show');
+      document.getElementById('crashValue').textContent = '—';
+      document.getElementById('statusMsg').textContent = '';
+      document.getElementById('sha512Out').textContent = '—';
+      document.getElementById('sha256Out').textContent = '—';
+      document.getElementById('hValue').textContent = '—';
+    });
+
+    // Verificar
+    document.getElementById('verifyBtn').addEventListener('click', async () => {
+      const serverSeed = document.getElementById('serverSeed').value.trim();
+      if (!serverSeed) { alert('Cole o Server Seed.'); return; }
+
+      let combined = serverSeed;
+      if (mode === 1) {
+        const cs = document.getElementById('clientSeed1').value.trim();
+        if (!cs) { alert('Cole o Client Seed.'); return; }
+        combined += cs;
+      } else {
+        const cs1 = document.getElementById('cs1').value.trim();
+        const cs2 = document.getElementById('cs2').value.trim();
+        const cs3 = document.getElementById('cs3').value.trim();
+        if (!cs1 || !cs2 || !cs3) { alert('Cole os 3 Client Seeds.'); return; }
+        combined += cs1 + cs2 + cs3;
+      }
+
+      const btn = document.getElementById('verifyBtn');
+      btn.disabled = true;
+      btn.textContent = '...';
+
+      try {
+        const hash512 = await sha512(combined);
+        const hash256 = await sha256(serverSeed);
+        const crash = calculateCrash(hash512);
+        const crashStr = crash.toFixed(2);
+
+        const resultBox = document.getElementById('resultBox');
+        const crashEl = document.getElementById('crashValue');
+        const statusEl = document.getElementById('statusMsg');
+
+        crashEl.textContent = crashStr + 'x';
+        document.getElementById('sha512Out').textContent = hash512;
+        document.getElementById('sha256Out').textContent = hash256;
+        document.getElementById('hValue').textContent = (parseInt(hash512.substring(0,13),16) / Math.pow(2,52)).toFixed(12);
+
+        const expectedHash = document.getElementById('expectedHash').value.trim().toLowerCase();
+        const expectedCrash = document.getElementById('expectedCrash').value.trim();
+
+        let messages = [];
+        let allOk = true;
+
+        if (expectedHash) {
+          if (hash256 === expectedHash) {
+            messages.push('✅ Hash SHA-256 confere');
+          } else {
+            messages.push('❌ Hash SHA-256 NÃO confere');
+            allOk = false;
+          }
+        }
+
+        if (expectedCrash) {
+          const exp = parseFloat(expectedCrash);
+          if (Math.abs(exp - crash) < 0.005) {
+            messages.push('✅ Multiplicador bate com a rodada');
+          } else {
+            messages.push(`❌ Diferente (jogo: ${exp}x / calc: ${crashStr}x)`);
+            allOk = false;
+          }
+        }
+
+        if (!messages.length) messages.push('✅ Cálculo ok. Compare com a rodada.');
+
+        statusEl.innerHTML = messages.join('<br>');
+        statusEl.className = 'status ' + (allOk ? 'ok' : 'fail');
+        crashEl.className = 'crash-value ' + (allOk ? 'ok' : 'fail');
+        resultBox.classList.add('show');
+      } catch (err) {
+        alert('Erro: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Verificar';
+      }
+    });
+  </script>
+</body>
+</html>
